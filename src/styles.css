@@ -1288,10 +1288,31 @@ summary:focus-visible {
 .knowledge-map__toolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 14px;
   border-bottom: 1px solid #edf1f6;
   background: #fff;
+}
+
+.knowledge-map__stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.knowledge-map__stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.knowledge-map__stats b {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .knowledge-map__zoom {

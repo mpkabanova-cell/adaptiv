@@ -73,6 +73,15 @@ export default function KnowledgeMap({ skills, selectedId, onSelect }) {
   const skillMap = useMemo(() => new Map(skills.map((skill) => [skill.id, skill])), [skills]);
   const graph = useMemo(() => buildKnowledgeGraph(skills), [skills]);
   const nodes = useMemo(() => layoutKnowledgeGraph(graph), [graph]);
+  const taskCount = useMemo(() => {
+    const seen = new Set();
+    for (const skill of skills) {
+      for (const task of skill.tasks || []) {
+        seen.add(task.id);
+      }
+    }
+    return seen.size;
+  }, [skills]);
   const [size, setSize] = useState({ width: 960, height: 620 });
   const [zoom, setZoom] = useState(0.4);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -303,6 +312,17 @@ export default function KnowledgeMap({ skills, selectedId, onSelect }) {
   return (
     <section className="knowledge-map" aria-label="Карта знаний">
       <div className="knowledge-map__toolbar">
+        <div className="knowledge-map__stats" aria-label="Статистика графа">
+          <span>
+            <b>{nodes.length}</b> узлов
+          </span>
+          <span>
+            <b>{graph.links.length}</b> связей
+          </span>
+          <span>
+            <b>{taskCount}</b> заданий
+          </span>
+        </div>
         <div className="knowledge-map__zoom">
           <button type="button" onClick={fitAll} aria-label="Показать всю карту">
             <RotateCcw size={16} />

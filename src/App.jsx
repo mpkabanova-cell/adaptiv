@@ -12,7 +12,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CircleHelp,
-  Flag,
   GraduationCap,
   Menu,
   Network,
@@ -584,17 +583,6 @@ function Sidebar({ open, onClose, collapsed, onToggleCollapse, selectedId, skill
               />
             )}
           </div>
-          <div className="sidebar__stats">
-            <span>
-              <b>{learningData.meta.skills}</b> навыка
-            </span>
-            <span>
-              <b>{learningData.meta.relations}</b> связей
-            </span>
-            <span>
-              <b>{learningData.meta.tasks}</b> заданий
-            </span>
-          </div>
         </div>
       </aside>
     </>
@@ -732,7 +720,6 @@ function Practice({ skill, onTheory, onTaskChange }) {
     <div className="practice">
       <div className="practice__meta">
         <span>Задание {index + 1} из {tasks.length}</span>
-        <span>Базовый уровень</span>
       </div>
       <div className="practice__progress">
         {tasks.map((_, itemIndex) => {
@@ -755,7 +742,6 @@ function Practice({ skill, onTheory, onTaskChange }) {
         })}
       </div>
       <article className="task-card">
-        <span className="eyebrow">Примените правило</span>
         <div className="task-card__prompt">
           <ReactMarkdown
             remarkPlugins={[remarkMath]}
@@ -912,10 +898,6 @@ export default function App() {
           </button>
         </div>
         <div className="topbar__actions">
-          <button className="finish-button">
-            <Flag size={17} />
-            Завершить
-          </button>
           {mode !== "map" && (
             <button
               className={["assistant-toggle", !assistantCollapsed ? "is-active" : ""]
