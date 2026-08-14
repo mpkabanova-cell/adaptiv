@@ -955,7 +955,7 @@ function Practice({ skill, onTheory, onTaskChange }) {
               <>
                 <CircleHelp size={19} />
                 <span>
-                  <b>Почти получилось.</b> Не получилось, попробуй ещё раз.
+                  <b>Почти получилось.</b> Попробуй ещё раз.
                 </span>
               </>
             )}
