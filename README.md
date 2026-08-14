@@ -49,7 +49,7 @@ npm start
 1. Запушьте репозиторий на GitHub.
 2. В [Render Dashboard](https://dashboard.render.com) создайте **Web Service** из репозитория.
 3. Настройки:
-   - **Build Command:** `npm ci && npm run build`
+   - **Build Command:** `npm ci --include=dev && npm run build`
    - **Start Command:** `npm start`
 4. Environment Variables:
    - `ANTHROPIC_API_KEY` — секрет (OpenRouter `sk-or-...` или Anthropic)
