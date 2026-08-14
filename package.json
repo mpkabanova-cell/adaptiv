@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/mpkabanova-cell/adaptiv#readme",
   "dependencies": {
+    "@vitejs/plugin-react": "^6.0.5",
     "express": "^4.21.2",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
@@ -30,10 +31,7 @@
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "rehype-raw": "^7.0.0",
-    "remark-math": "^6.0.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^6.0.5",
+    "remark-math": "^6.0.0",
     "vite": "^8.2.1"
   }
 }
