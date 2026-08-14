@@ -180,43 +180,6 @@ const MARKDOWN_COMPONENTS = {
   },
 };
 
-/** Pull «Правило …» segments out of text; drop --- wrappers. */
-function extractRules(text) {
-  const rules = [];
-  let cleaned = String(text || "");
-
-  cleaned = cleaned.replace(
-    /(?:^|\n)(?:---\s*\n+)*\*\*((?:Правило|правило)[^*]+?)\*\*([^\n]*)\n?([\s\S]*?)(?=(?:\n---\s*\n)|(?:\n---\s*$)|(?:\n#{1,3}\s)|(?:\n<details[\s>])|(?:\n<\/details>)|$)/g,
-    (_, title, lead, body) => {
-      const bodyClean = String(body || "")
-        .replace(/^\s*---\s*$/gm, "")
-        .trim();
-      rules.push({
-        title: String(title).trim(),
-        lead: String(lead || "").trim(),
-        body: bodyClean,
-      });
-      return "\n";
-    },
-  );
-
-  cleaned = cleaned
-    .replace(/^\s*---\s*$/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  return { cleaned, rules };
-}
-
-function rulesToMarkdown(rules) {
-  return rules
-    .map((rule) => {
-      const head = `**${rule.title}**${rule.lead ? ` ${rule.lead}` : ""}`;
-      return rule.body ? `${head}\n\n${rule.body}` : head;
-    })
-    .join("\n\n");
-}
-
 /** Convert remaining `--- **Правило** ---` into plain markdown in place. */
 function unwrapStandaloneRules(markdown) {
   return String(markdown || "")
@@ -236,6 +199,13 @@ function unwrapStandaloneRules(markdown) {
     .replace(/\n{3,}/g, "\n\n");
 }
 
+function cleanDetailsBody(body) {
+  return String(body || "")
+    .replace(/^\s*---\s*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function normalizeTheoryMarkdown(markdown) {
   const withDetails = String(markdown || "").replace(
     /<details>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/gi,
@@ -245,12 +215,11 @@ function normalizeTheoryMarkdown(markdown) {
         .replace(/<[^>]+>/g, "")
         .replace(/\s+/g, " ")
         .trim();
-      const { cleaned: bodyClean, rules } = extractRules(body);
-      const rulesMd = rulesToMarkdown(rules);
+      const bodyClean = cleanDetailsBody(body);
 
       if (/^обрати внимание/i.test(plain)) {
         const rest = plain.replace(/^обрати внимание\s*,?\s*/i, "");
-        const note = [
+        return [
           '<details class="theory-note" open>',
           "<summary><b>Обрати внимание</b>" +
             (rest ? `, ${rest}` : "") +
@@ -258,26 +227,23 @@ function normalizeTheoryMarkdown(markdown) {
           bodyClean,
           "</details>",
         ].join("\n");
-        return rulesMd ? `${note}\n\n${rulesMd}` : note;
       }
 
       if (/^решение|^краткое решение/i.test(plain)) {
-        const block = [
+        return [
           '<details class="theory-solution">',
           `<summary>${summaryHtml}</summary>`,
           bodyClean,
           "</details>",
         ].join("\n");
-        return rulesMd ? `${block}\n\n${rulesMd}` : block;
       }
 
-      const block = [
+      return [
         '<details class="theory-callout">',
         `<summary>${summaryHtml}</summary>`,
         bodyClean,
         "</details>",
       ].join("\n");
-      return rulesMd ? `${block}\n\n${rulesMd}` : block;
     },
   );
 
