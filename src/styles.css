@@ -703,40 +703,10 @@ summary:focus-visible {
 }
 
 .theory-document h4 {
-  display: inline-flex;
   margin: 28px 0 10px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #e8f4ff;
-  color: #1a6fb5;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.theory-document h4.theory-solution-heading {
-  display: flex;
-  width: 100%;
-  margin: 28px 0 0;
-  padding: 12px 16px;
-  border: 1px solid #ccefe4;
-  border-bottom: 0;
-  border-radius: 14px 14px 0 0;
-  background: #f1fbf8;
-  color: #247a62;
-  letter-spacing: 0.04em;
-}
-
-.theory-document h4.theory-solution-heading + p,
-.theory-document h4.theory-solution-heading + ol,
-.theory-document h4.theory-solution-heading + ul,
-.theory-document h4.theory-solution-heading + .katex-display {
-  margin-top: 0;
-  padding: 4px 16px 16px;
-  border: 1px solid #ccefe4;
-  border-top: 0;
-  border-radius: 0 0 14px 14px;
-  background: #f1fbf8;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .theory-document p,
@@ -748,6 +718,36 @@ summary:focus-visible {
 
 .theory-document li + li {
   margin-top: 7px;
+}
+
+.theory-document ol > li,
+.theory-callout__body ol > li {
+  padding-left: 0;
+}
+
+.theory-math-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em 0.55em;
+  max-width: 100%;
+}
+
+.theory-math-scroll > p {
+  display: contents;
+  margin: 0;
+}
+
+.theory-math-scroll .katex {
+  display: inline-block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.theory-document ol > li > p,
+.theory-callout__body ol > li > p {
+  margin: 0;
 }
 
 .theory-document strong {
@@ -765,6 +765,16 @@ summary:focus-visible {
   border: 1px solid #e8e2ff;
   border-radius: 14px;
   background: #faf9ff;
+}
+
+.theory-document .katex-display > .katex {
+  white-space: nowrap;
+}
+
+.theory-document li .katex-display,
+.theory-callout__body li .katex-display {
+  margin: 8px 0 12px;
+  padding: 12px 14px;
 }
 
 .theory-document .katex {
@@ -902,7 +912,13 @@ summary:focus-visible {
 
 .theory-callout__body .katex-display {
   margin: 14px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.theory-callout__body .katex-display > .katex {
+  white-space: nowrap;
 }
 
 .definition-block {

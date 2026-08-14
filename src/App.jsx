@@ -94,7 +94,7 @@ function RuleCallout({ children }) {
   const [first, ...rest] = items;
 
   return (
-    <details className="theory-callout theory-callout--rule" open>
+    <details className="theory-callout theory-callout--rule">
       <summary className="theory-callout__summary">
         <span className="theory-callout__icon" aria-hidden="true">
           <Sparkles size={16} />
@@ -108,36 +108,153 @@ function RuleCallout({ children }) {
   );
 }
 
-const MARKDOWN_COMPONENTS = {
-  details: ({ children, className, ...props }) => {
-    const extra = Array.isArray(className)
-      ? className.join(" ")
-      : className || "";
-    const isSolution = /\btheory-solution\b/.test(extra);
-    const isNote = /\btheory-note\b/.test(extra);
-    return (
-      <details
-        className={[
-          "theory-callout",
-          isSolution ? "theory-callout--solution" : "",
-          isNote ? "theory-callout--note" : "",
-          extra,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        {...props}
-      >
-        {children}
-      </details>
-    );
-  },
-  summary: ({ children, ...props }) => (
-    <summary className="theory-callout__summary" {...props}>
+const THEORY_BODY_COMPONENTS = {
+  h4: ({ children, ...props }) => <h4 {...props}>{children}</h4>,
+  hr: () => null,
+  blockquote: ({ children }) => (
+    <blockquote className="definition-block">
+      <span className="definition-block__label">Определение</span>
+      {children}
+    </blockquote>
+  ),
+  p: ({ children, ...props }) => <p {...props}>{children}</p>,
+  li: ({ children, ...props }) => (
+    <li {...props}>
+      <div className="theory-math-scroll">{children}</div>
+    </li>
+  ),
+};
+
+function escapeHtmlAttr(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
+}
+
+function encodeBodyForAttr(body) {
+  const text = String(body || "");
+  if (typeof globalThis.btoa === "function") {
+    return globalThis.btoa(encodeURIComponent(text));
+  }
+  return encodeURIComponent(text);
+}
+
+function decodeBodyFromAttr(value) {
+  if (!value) return "";
+  if (typeof globalThis.atob === "function") {
+    try {
+      return decodeURIComponent(globalThis.atob(value));
+    } catch {
+      return value;
+    }
+  }
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function buildDetailsBlock({
+  className,
+  summaryPlain,
+  summaryHtml,
+  body,
+}) {
+  const attrs = [
+    `class="${className}"`,
+    `data-summary="${escapeHtmlAttr(summaryPlain)}"`,
+    `data-body="${encodeBodyForAttr(body)}"`,
+  ];
+  if (summaryHtml && summaryHtml !== summaryPlain) {
+    attrs.push(`data-summary-html="${escapeHtmlAttr(summaryHtml)}"`);
+  }
+  return `<details ${attrs.join(" ")}></details>`;
+}
+
+function TheoryCalloutSummary({ children, summaryHtml }) {
+  return (
+    <summary className="theory-callout__summary">
       <span className="theory-callout__icon" aria-hidden="true">
         <Sparkles size={16} />
       </span>
-      <span className="theory-callout__title">{children}</span>
+      <span className="theory-callout__title">
+        {summaryHtml ? (
+          <span dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+        ) : (
+          children
+        )}
+      </span>
     </summary>
+  );
+}
+
+function extractDetailsBodyMarkdown(children) {
+  return Children.toArray(children)
+    .map((child) => (typeof child === "string" ? child : ""))
+    .join("")
+    .trim();
+}
+
+function TheoryDetailsCallout({
+  children,
+  className,
+  "data-summary": dataSummaryProp,
+  "data-summary-html": dataSummaryHtmlProp,
+  "data-body": dataBodyProp,
+  open: _open,
+  ...props
+}) {
+  const dataSummary = dataSummaryProp ?? props.dataSummary ?? "";
+  const dataSummaryHtml = dataSummaryHtmlProp ?? props.dataSummaryHtml ?? "";
+  const extra = Array.isArray(className) ? className.join(" ") : className || "";
+  const isSolution = /\btheory-solution\b/.test(extra);
+  const isNote = /\btheory-note\b/.test(extra);
+  const bodyMarkdown = prepareTheoryMarkdown(
+    decodeBodyFromAttr(dataBodyProp ?? props.dataBody ?? "") ||
+      extractDetailsBodyMarkdown(children),
+  );
+
+  return (
+    <details
+      className={[
+        "theory-callout",
+        isSolution ? "theory-callout--solution" : "",
+        isNote ? "theory-callout--note" : "",
+        extra,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      {...props}
+    >
+      <TheoryCalloutSummary summaryHtml={dataSummaryHtml}>
+        {dataSummary}
+      </TheoryCalloutSummary>
+      {bodyMarkdown ? (
+        <div className="theory-callout__body">
+          <ReactMarkdown
+            remarkPlugins={[remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            components={THEORY_BODY_COMPONENTS}
+          >
+            {bodyMarkdown}
+          </ReactMarkdown>
+        </div>
+      ) : null}
+    </details>
+  );
+}
+
+const MARKDOWN_COMPONENTS = {
+  details: TheoryDetailsCallout,
+  summary: ({ children, ...props }) => (
+    <TheoryCalloutSummary {...props}>{children}</TheoryCalloutSummary>
+  ),
+  li: ({ children, ...props }) => (
+    <li {...props}>
+      <div className="theory-math-scroll">{children}</div>
+    </li>
   ),
   div: ({ className, children, ...props }) => {
     const classes = Array.isArray(className)
@@ -152,21 +269,7 @@ const MARKDOWN_COMPONENTS = {
       </div>
     );
   },
-  h4: ({ children, ...props }) => {
-    const text = String(
-      Array.isArray(children)
-        ? children.map((child) => (typeof child === "string" ? child : "")).join("")
-        : children || "",
-    ).trim();
-    if (/^решение/i.test(text)) {
-      return (
-        <h4 className="theory-solution-heading" {...props}>
-          {children}
-        </h4>
-      );
-    }
-    return <h4 {...props}>{children}</h4>;
-  },
+  h4: ({ children, ...props }) => <h4 {...props}>{children}</h4>,
   hr: () => null,
   blockquote: ({ children }) => (
     <blockquote className="definition-block">
@@ -219,35 +322,123 @@ function normalizeTheoryMarkdown(markdown) {
 
       if (/^обрати внимание/i.test(plain)) {
         const rest = plain.replace(/^обрати внимание\s*,?\s*/i, "");
-        return [
-          '<details class="theory-note" open>',
-          "<summary><b>Обрати внимание</b>" +
-            (rest ? `, ${rest}` : "") +
-            "</summary>",
-          bodyClean,
-          "</details>",
-        ].join("\n");
+        const noteSummaryHtml =
+          "<b>Обрати внимание</b>" + (rest ? `, ${rest}` : "");
+        return buildDetailsBlock({
+          className: "theory-note",
+          summaryPlain: plain,
+          summaryHtml: noteSummaryHtml,
+          body: bodyClean,
+        });
       }
 
       if (/^решение|^краткое решение/i.test(plain)) {
-        return [
-          '<details class="theory-solution">',
-          `<summary>${summaryHtml}</summary>`,
-          bodyClean,
-          "</details>",
-        ].join("\n");
+        return buildDetailsBlock({
+          className: "theory-solution",
+          summaryPlain: "Решение",
+          summaryHtml: "<b>Решение</b>",
+          body: bodyClean,
+        });
       }
 
-      return [
-        '<details class="theory-callout">',
-        `<summary>${summaryHtml}</summary>`,
-        bodyClean,
-        "</details>",
-      ].join("\n");
+      return buildDetailsBlock({
+        className: "theory-callout",
+        summaryPlain: plain,
+        summaryHtml: summaryHtml,
+        body: bodyClean,
+      });
     },
   );
 
   return unwrapStandaloneRules(withDetails).trim();
+}
+
+function shouldPromoteInlineMath(expr) {
+  const value = String(expr || "").trim();
+  return (
+    value.length >= 60 ||
+    value.includes("\\Leftrightarrow") ||
+    value.includes("\\leftrightarrow") ||
+    /\\d?frac\{[^}]*\\d?frac/.test(value)
+  );
+}
+
+function rebuildMathAtEquivalence(expr) {
+  const parts = String(expr || "")
+    .split(/\\Leftrightarrow/)
+    .map((part) =>
+      part
+        .trim()
+        .replace(/^\\\s+/, "")
+        .replace(/\\+\s*$/, "")
+        .trim(),
+    )
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    return `$${String(expr || "").trim()}$`;
+  }
+
+  return parts
+    .map((part, index) => (index === 0 ? `$${part}$` : `$\\Leftrightarrow$ $${part}$`))
+    .join(" ");
+}
+
+/** Allow wrapping only between equivalence steps, never inside a step. */
+function splitMathAtEquivalence(markdown) {
+  return String(markdown || "")
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      if (trimmed.includes("$$")) {
+        return line;
+      }
+
+      const displayMatch = trimmed.match(/^\$\$(.+)\$\$$/);
+      if (displayMatch?.[1]?.includes("\\Leftrightarrow")) {
+        return line.replace(trimmed, rebuildMathAtEquivalence(displayMatch[1]));
+      }
+
+      const listMatch = line.match(/^(\s*\d+\.\s*)\$(.+)\$\s*$/);
+      if (listMatch?.[2]?.includes("\\Leftrightarrow")) {
+        return `${listMatch[1]}${rebuildMathAtEquivalence(listMatch[2])}`;
+      }
+
+      const inlineMatch = trimmed.match(/^\$(.+)\$$/);
+      if (inlineMatch?.[1]?.includes("\\Leftrightarrow")) {
+        const rebuilt = rebuildMathAtEquivalence(inlineMatch[1]);
+        return line.replace(trimmed, rebuilt);
+      }
+
+      return line;
+    })
+    .join("\n");
+}
+
+function prepareTheoryMarkdown(markdown) {
+  return promoteLongInlineMath(
+    splitMathAtEquivalence(normalizeTheoryMarkdown(markdown)),
+  );
+}
+
+/** Promote only lines that are entirely one inline formula (never touch $$...$$). */
+function promoteLongInlineMath(markdown) {
+  return String(markdown || "")
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      if (/^\s*\d+\.\s*\$/.test(line) || trimmed.includes("$$")) {
+        return line;
+      }
+
+      const onlyInline = trimmed.match(/^\$(.+)\$$/);
+      if (onlyInline && shouldPromoteInlineMath(onlyInline[1])) {
+        return `\n\n$$${onlyInline[1].trim()}$$`;
+      }
+
+      return line;
+    })
+    .join("\n");
 }
 
 function shortTitle(title, length = 46) {
@@ -557,7 +748,7 @@ function Sidebar({ open, onClose, collapsed, onToggleCollapse, selectedId, skill
 
 function Theory({ skill, onPractice }) {
   const theoryMarkdown = useMemo(
-    () => normalizeTheoryMarkdown(skill.theory),
+    () => prepareTheoryMarkdown(skill.theory),
     [skill.theory],
   );
 
@@ -578,6 +769,7 @@ function Theory({ skill, onPractice }) {
           <p>{skill.description || "Разберём правило, примеры и способ решения."}</p>
         </div>
         <ReactMarkdown
+          key={skill.id}
           remarkPlugins={[remarkMath, remarkRuleBlocks]}
           rehypePlugins={[rehypeRaw, rehypeKatex]}
           components={MARKDOWN_COMPONENTS}
