@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "vite --config vite.config.dev.js",
+    "predev": "node scripts/ensure-local-setup.js",
     "build": "vite build",
+    "prebuild": "node scripts/ensure-local-setup.js",
     "start": "node server.js",
     "preview": "vite preview --config vite.config.dev.js",
     "data": "python3 scripts/extract_learning_data.py"
